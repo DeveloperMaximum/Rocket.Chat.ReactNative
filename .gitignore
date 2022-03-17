@@ -66,3 +66,4 @@ e2e/docker/rc_test_env/docker-compose.yml
 e2e/docker/data/db
 
 *.p8
+**/google-services.json

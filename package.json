@@ -12,6 +12,7 @@
 		"ios": "npx react-native run-ios",
 		"android": "npx react-native run-android --variant=experimentalPlayDebug",
 		"android-whitelabel": "npx react-native run-android --main-activity chat.rocket.reactnative.MainActivity --variant=experimentalPlayDebug --appId",
+		"android-maximum": "npx react-native run-android --main-activity chat.rocket.reactnative.MainActivity --variant=experimentalPlayRelease --appId ru.mxmit.rc",
 		"log-android": "react-native log-android",
 		"snyk-protect": "snyk protect",
 		"precommit": "lint-staged",

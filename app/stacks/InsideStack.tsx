@@ -67,6 +67,7 @@ import AddChannelTeamView from '../views/AddChannelTeamView';
 import AddExistingChannelView from '../views/AddExistingChannelView';
 import SelectListView from '../views/SelectListView';
 import DiscussionsView from '../views/DiscussionsView';
+import SupportView from '../views/SupportView';
 import {
 	AdminPanelStackParamList,
 	ChatsStackParamList,
@@ -79,6 +80,22 @@ import {
 	ProfileStackParamList,
 	SettingsStackParamList
 } from './types';
+
+// SupportStackNavigator
+const SupportStack = createStackNavigator();
+const SupportStackNavigator = () => {
+	const { theme } = React.useContext(ThemeContext);
+	return (
+		<SupportStack.Navigator screenOptions={{ ...defaultHeader, ...themedHeader(theme), ...StackAnimation }}>
+			<SupportStack.Screen
+				name='SupportView'
+				component={SupportView}
+				options={SupportView.navigationOptions}
+				userPref={UserPreferencesView}
+			/>
+		</SupportStack.Navigator>
+	);
+};
 
 // ChatsStackNavigator
 const ChatsStack = createStackNavigator<ChatsStackParamList>();
@@ -178,6 +195,7 @@ const SettingsStackNavigator = () => {
 				component={E2EEncryptionSecurityView}
 				options={E2EEncryptionSecurityView.navigationOptions}
 			/>
+
 			<SettingsStack.Screen name='LanguageView' component={LanguageView} options={LanguageView.navigationOptions} />
 			<SettingsStack.Screen name='ThemeView' component={ThemeView} options={ThemeView.navigationOptions} />
 			<SettingsStack.Screen
@@ -235,6 +253,7 @@ const DrawerNavigator = () => {
 			<Drawer.Screen name='ChatsStackNavigator' component={ChatsStackNavigator} />
 			<Drawer.Screen name='ProfileStackNavigator' component={ProfileStackNavigator} />
 			<Drawer.Screen name='SettingsStackNavigator' component={SettingsStackNavigator} />
+			<Drawer.Screen name='SupportStackNavigator' component={SupportStackNavigator} />
 			<Drawer.Screen name='AdminPanelStackNavigator' component={AdminPanelStackNavigator} />
 			<Drawer.Screen name='DisplayPrefStackNavigator' component={DisplayPrefStackNavigator} />
 		</Drawer.Navigator>

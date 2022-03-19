@@ -103,7 +103,8 @@ class ProfileView extends React.Component<IProfileViewProps, IProfileViewState> 
 		this.setState({ avatar });
 	};
 
-	init = (user?: IUser) => {
+	// eslint-disable-next-line require-await
+	init = async (user?: IUser) => {
 		const { user: userProps } = this.props;
 		const { name, username, emails, customFields } = user || userProps;
 

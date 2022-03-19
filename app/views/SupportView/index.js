@@ -22,6 +22,7 @@ import { LISTENER } from '../../containers/Toast';
 import Touch from '../../utils/touch';
 import { CustomIcon } from '../../lib/Icons';
 import UserPreferences from '../../lib/userPreferences';
+import RocketChat from '../../lib/rocketchat';
 import styles from './styles';
 
 class SupportView extends React.Component {
@@ -46,6 +47,7 @@ class SupportView extends React.Component {
 		name: null,
 		email: null,
 		username: null,
+		uf_token: null,
 
 		TITLE: null,
 		MESSAGE: null,
@@ -60,27 +62,22 @@ class SupportView extends React.Component {
 		defaultInput: ''
 	};
 
-	componentDidMount() {
+	componentDidMount = async () => {
 		this.init();
-
-		const portal = UserPreferences.getMapAsync('portal').then(result => {
-			this.setState({ portal: result });
-
-			let url = 'https://maximumportal.mxmit.ru/data/api/rc/techcats/?uf_token=';
-			url += result.USER.UF_TOKEN;
-			fetch(url, {
-				method: 'GET'
+		const pref = await RocketChat.getUserPreferences(this.props.user.id).then(r => r);
+		await this.setState({ uf_token: pref.preferences.uf_token });
+		await fetch(`https://maximumportal.mxmit.ru/data/api/rc/techcats/?uf_token=${pref.preferences.uf_token}`, {
+			method: 'GET'
+		})
+			.then(r => r.json())
+			.then((r) => {
+				const categories = (r.data !== false) ? r.data : [];
+				this.setState({ categories });
 			})
-				.then(response => response.json())
-				.then(responseJson => {
-					const categories = responseJson.data;
-					this.setState({ categories });
-				})
-				.catch(error => {
-					console.error(error);
-				});
-		});
-	}
+			.catch(error => {
+				console.log(JSON.stringify(error));
+			});
+	};
 
 	UNSAFE_componentWillReceiveProps(nextProps) {
 		const { user } = this.props;
@@ -96,6 +93,7 @@ class SupportView extends React.Component {
 			name: null,
 			email: null,
 			username: null,
+			uf_token: null,
 
 			TITLE: null,
 			MESSAGE: null,
@@ -129,7 +127,7 @@ class SupportView extends React.Component {
 		}
 	}
 
-	init = user => {
+	init = (user) => {
 		const { user: userProps } = this.props;
 		const { name, username, emails } = user || userProps;
 
@@ -166,7 +164,7 @@ class SupportView extends React.Component {
 		const { TITLE, MESSAGE, CATEGORY_ID, FILES, defaultInput } = this.state;
 
 		if (!TITLE || !MESSAGE || !CATEGORY_ID) {
-			EventEmitter.emit(LISTENER, { message: 'Все поля обязательны для заполнения' });
+			EventEmitter.emit(LISTENER, { message: `Все поля обязательны для заполнения` });
 			this.setState({ formLoading: false });
 			return false;
 		}
@@ -182,7 +180,7 @@ class SupportView extends React.Component {
 			body.append('FILES[]', file);
 		}
 
-		body.append('uf_token', this.state.portal?.USER.UF_TOKEN);
+		body.append('uf_token', this.state?.uf_token);
 
 		fetch('https://maximumportal.mxmit.ru/data/api/ticket', {
 			method: 'POST',

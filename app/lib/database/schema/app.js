@@ -262,7 +262,8 @@ export default appSchema({
 				{ name: '_id', type: 'string', isIndexed: true },
 				{ name: 'name', type: 'string', isOptional: true },
 				{ name: 'username', type: 'string', isIndexed: true },
-				{ name: 'avatar_etag', type: 'string', isOptional: true }
+				{ name: 'avatar_etag', type: 'string', isOptional: true },
+				{ name: 'uf_token', type: 'string', isOptional: true }
 			]
 		})
 	]

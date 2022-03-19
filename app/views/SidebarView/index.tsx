@@ -223,7 +223,7 @@ class Sidebar extends Component<ISidebarProps, ISidebarState> {
 					left={<CustomIcon name='omnichannel' size={20} color={themes[theme!].titleText} />}
 					onPress={() => this.sidebarNavigate('SupportStackNavigator')}
 					testID='sidebar-support'
-					theme={theme!}
+					theme={theme!} /*current={this.currentItemKey === 'SupportStackNavigator'}*/
 				/>
 				<SidebarItem
 					text={I18n.t('Settings')}

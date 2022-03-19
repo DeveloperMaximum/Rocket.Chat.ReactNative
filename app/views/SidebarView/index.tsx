@@ -220,11 +220,10 @@ class Sidebar extends Component<ISidebarProps, ISidebarState> {
 				/>
 				<SidebarItem
 					text={I18n.t('Support')}
-					left={<CustomIcon name='sort' size={20} color={themes[theme!].titleText} />}
+					left={<CustomIcon name='omnichannel' size={20} color={themes[theme!].titleText} />}
 					onPress={() => this.sidebarNavigate('SupportStackNavigator')}
 					testID='sidebar-support'
 					theme={theme!}
-					current={this.currentItemKey === 'SupportStackNavigator'}
 				/>
 				<SidebarItem
 					text={I18n.t('Settings')}

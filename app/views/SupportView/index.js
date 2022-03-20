@@ -1,5 +1,5 @@
 import React from 'react';
-import { Button, ScrollView, Picker, View, Text, TouchableOpacity, Image } from 'react-native';
+import { ScrollView, Picker, View, Text, TouchableOpacity, Image } from 'react-native';
 import PropTypes from 'prop-types';
 import { connect, useSelector } from 'react-redux';
 import { dequal } from 'dequal';
@@ -7,6 +7,7 @@ import omit from 'lodash/omit';
 
 import DocumentPicker from 'react-native-document-picker';
 import I18n from '../../i18n';
+import Button from '../../containers/Button';
 import * as HeaderButton from '../../containers/HeaderButton';
 import { withTheme } from '../../theme';
 import { getUserSelector } from '../../selectors/login';
@@ -70,8 +71,8 @@ class SupportView extends React.Component {
 			method: 'GET'
 		})
 			.then(r => r.json())
-			.then((r) => {
-				const categories = (r.data !== false) ? r.data : [];
+			.then(r => {
+				const categories = r.data !== false ? r.data : [];
 				this.setState({ categories });
 			})
 			.catch(error => {
@@ -127,7 +128,7 @@ class SupportView extends React.Component {
 		}
 	}
 
-	init = (user) => {
+	init = user => {
 		const { user: userProps } = this.props;
 		const { name, username, emails } = user || userProps;
 
@@ -292,7 +293,7 @@ class SupportView extends React.Component {
 								disabled={disabled}
 								theme={theme}
 								title='Отправить заявку'
-								type='submit'
+								type='primary'
 								testID='support-view-submit'
 								onPress={() => {
 									this.submit();

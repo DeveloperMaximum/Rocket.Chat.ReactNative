@@ -237,7 +237,13 @@ class SupportView extends React.Component {
 								onValueChange={(itemValue, itemIndex) => this.setState({ CATEGORY_ID: itemValue })}>
 								<Picker.Item label={'Выберите категорию обращения'} value={'0'} key={'0'} />
 								{this.state.categories.map((item, key) => (
-									<Picker.Item label={item.NAME} value={item.ID} key={key} />
+									<Picker.Item
+										color={theme === 'light' ? '#000' : '#fff'}
+										css={{ color: theme === 'light' ? '#000' : '#fff' }}
+										label={item.NAME}
+										value={item.ID}
+										key={key}
+									/>
 								))}
 							</RCPicker>
 						}

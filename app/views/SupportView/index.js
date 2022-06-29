@@ -198,6 +198,7 @@ class SupportView extends React.Component {
 				} else {
 					this.setState({ notice: 'По неизвестной причине заявку отправить не удалось, пожалуйста, попробуйте позже' });
 				}
+				this.setState({ formLoading: false });
 				this.init();
 			})
 			.catch(error => {
@@ -213,7 +214,7 @@ class SupportView extends React.Component {
 
 		// this.setState({ disabled: true });
 
-		EventEmitter.emit(LISTENER, { message: 'Заявка успешно отправлена' });
+		// EventEmitter.emit(LISTENER, { message: 'Заявка успешно отправлена' });
 	};
 
 	render() {
